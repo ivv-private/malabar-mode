@@ -35,13 +35,13 @@ class Classpath
     
     Classpath() {
         System.getProperty("sun.boot.class.path").split(File.pathSeparator).each() {
-            bootUrls << "file:" + it
+            bootUrls << "file:" + (new File(it)).toURI().toString()
         }
 
         System.getProperty("java.ext.dirs").split(File.pathSeparator).each() { dir ->
             try {
                 (dir as File).eachFileMatch(~/.*.jar/) {
-                    extUrls << "file:" + it
+                    extUrls << "file:" + it.toURI().toString()
                 }
             } catch (FileNotFoundException e) {
                 // EAT IT
@@ -54,15 +54,12 @@ class Classpath
         this.artifacts = artifacts;
         
         this.extraEntries = extraEntries.collect {
-            if ((it as File).isDirectory() && !it.endsWith("/"))
-              it = it + "/"
-            this.urls << "file:" + it
-            "file:" + it
+            (new File(it)).toURI().toString()
         }
         
         artifacts.each {
             if (it.file)
-                this.urls << "file:" + it.file.path
+                this.urls <<  (new File(it.file.path)).toURI()
         }
     }
 
@@ -163,7 +160,7 @@ class Classpath
         artifacts.each {
             currentArtifact = it
             if (it.file)
-                classcollector("file:" + it.file.path, classMap)
+                classcollector(new File(it.file.path).toURI().toString(), classMap)
         }
     }
 
@@ -175,7 +172,7 @@ class Classpath
     }
     
     def newClassLoader() {
-        def realUrls = urls.collect { new URL(it) }
+        def realUrls = urls.collect { it.toURL() }
         return new RootLoader(realUrls as URL[],
                               ClassLoader.systemClassLoader.parent)
     }
